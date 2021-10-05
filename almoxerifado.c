@@ -173,6 +173,13 @@ char editar(void) {
       scanf("%29[0-9a-zA-Z ]", i.desc);
       getchar();
       break;
+
+    default:
+      puts(" Você não escolheu nenhuma opção, ainda quer editar? [s/N]");
+      if (getchar() == 's') {
+        return '3';
+      }
+      return '0';
   }
 
   puts(" O item escolhido ficará assim: ");
@@ -379,40 +386,46 @@ char abrir(void) {
       "\n:"
       );
 
-  if (getchar() == '1') {
-      FILE * tmp = fopen(default_file, "rb");
-      fseek(tmp, 0, SEEK_END);
-      int tmp_size = ftell(tmp);
-      fseek(tmp, 0, SEEK_SET);
+  switch(getchar()) {
+    case '1':
+        FILE * tmp = fopen(default_file, "rb");
+        fseek(tmp, 0, SEEK_END);
+        int tmp_size = ftell(tmp);
+        fseek(tmp, 0, SEEK_SET);
 
-      cache = fopen(file, "wb");
-      fseek(cache, 0, SEEK_SET);
-      while (ftell(tmp) < tmp_size) {
-        // Carrega item do arquivo temporario em variavel
-        Item item_content;
-        memset(&item_content, 0, sizeof (Item));
-        fread(&item_content, 1, sizeof (Item), tmp);
-
-        // Movendo do arquivo temporario para o cache
-        fwrite(&item_content, 1, sizeof (Item), cache);
-      }
-      fclose(cache);
-      fclose(tmp);
-
-      cache = fopen(file, "rb");
-      fclose(cache);
-
-      puts(" Salvo e carregado com sucesso!");
-      getchar();
-      getchar();
-  } else {
-      cache = fopen(file, "rb");
-      if (!cache)
         cache = fopen(file, "wb");
-      fclose(cache);
+        fseek(cache, 0, SEEK_SET);
+        while (ftell(tmp) < tmp_size) {
+            // Carrega item do arquivo temporario em variavel
+            Item item_content;
+            memset(&item_content, 0, sizeof (Item));
+            fread(&item_content, 1, sizeof (Item), tmp);
 
-      puts(" Arquivo carregado com sucesso!");
-      getchar();
+            // Movendo do arquivo temporario para o cache
+            fwrite(&item_content, 1, sizeof (Item), cache);
+        }
+        fclose(cache);
+        fclose(tmp);
+
+        cache = fopen(file, "rb");
+        fclose(cache);
+
+        puts(" Salvo e carregado com sucesso!");
+        getchar();
+        getchar();
+    case '2':
+        cache = fopen(file, "rb");
+        if (!cache)
+            cache = fopen(file, "wb");
+        fclose(cache);
+
+        puts(" Arquivo carregado com sucesso!");
+        getchar();
+    default:
+        puts(" Você não escolheu nenhuma opção, quer tentar de novo? [s/N]");
+        if (getchar() == 's') {
+            return '3';
+        }
   }
 
   return '0';
