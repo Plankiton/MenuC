@@ -1,3 +1,5 @@
-char menu(char prev);
-char cadastro(char prev);
-char ver(char prev);
+char menu(void);
+char cadastro(void);
+char ver(void);
+char editar(void);
+char excluir(void);

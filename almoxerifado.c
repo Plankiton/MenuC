@@ -5,7 +5,7 @@
 
 FILE * cache;
 
-char menu(char prev) {
+char menu(void) {
   system("clear");
   printf(
       "---------------------------------\n"
@@ -31,34 +31,31 @@ typedef struct {
   unsigned int qtd;
 } Item;
 
-char cadastro(char prev) {
+char cadastro(void) {
   cache = fopen(".cache", "ab");
 
   Item i;
   memset(&i, 0, sizeof (Item));
 
-  printf("Digite o nome do item: ");
-  scanf("%s", i.nome);
+  getchar();
+  printf(" Digite o nome do item: ");
+  scanf("%14[0-9a-zA-Z ]", i.nome);
   getchar();
 
-  printf("Deseja cadastrar descrição? [s/N] ");
+  printf(" Deseja cadastrar descrição? [s/N] ");
   if (getchar() == 's') {
-    printf("Digite a descrição do item: ");
-    scanf("%s", i.desc);
+    getchar();
+    printf(" Digite a descrição do item: ");
+    scanf("%29[0-9a-zA-Z ]", i.desc);
     getchar();
   }
 
-  printf("Digite a quantidade de itens: ");
+  printf(" Digite a quantidade de itens: ");
   scanf("%i", &i.qtd);
   getchar();
 
-
   fseek(cache, 0, SEEK_END);
   int len = ftell(cache);
-  if (len % sizeof(Item) != 0) {
-    fclose(cache);
-    cache = fopen(".cache", "wb");
-  }
 
   if (len >= sizeof(Item))
     i.cod = (len/sizeof(Item));
@@ -66,30 +63,223 @@ char cadastro(char prev) {
 
   fwrite(&i, 1, sizeof (Item), cache);
 
+  puts(" O item escolhido ficará assim: ");
+  printf(" %i - %s, %i items\n", i.cod, i.nome, i.qtd);
+  if (strlen((char *)i.desc) >= 1)
+    printf("  > %s\n", i.desc);
+  getchar();
+
   fclose(cache);
   return '0';
 }
 
-char ver(char prev) {
-  cache = fopen(".cache", "rb");
-
+char ver(void) {
   Item i;
   memset(&i, 0, sizeof (Item));
 
   fflush(stdout);
   fflush(stdin);
-  printf("Digite o codigo do item que quer consultar: ");
+  printf(" Digite o codigo do item que quer consultar: ");
   scanf("%i", &i.cod);
   getchar();
 
-  fseek(cache, i.cod*sizeof(Item), SEEK_SET);
+  cache = fopen(".cache", "rb");
+  fseek(cache, 0, SEEK_END);
+  int len = ftell(cache);
+  int atual_cod = i.cod;
+  int real_cod = i.cod*sizeof(Item);
+  if (real_cod >= len) {
+    puts(" Item não existe");
+    getchar();
+    return '0';
+  }
+
+  fseek(cache, real_cod, SEEK_SET);
   fread(&i, 1, sizeof (Item), cache);
+  i.cod = atual_cod;
   fclose(cache);
 
-  printf("%i - %s, %i items\n", i.cod, i.nome, i.qtd);
-  if (i.desc[0])
+  puts(" O item escolhido foi: ");
+  printf(" %i - %s, %i items\n", i.cod, i.nome, i.qtd);
+  if (strlen((char *)i.desc) >= 1)
     printf("  > %s\n", i.desc);
 
   getchar();
+  return '0';
+}
+
+char editar(void) {
+  Item i;
+  memset(&i, 0, sizeof (Item));
+
+  fflush(stdout);
+  fflush(stdin);
+  printf(" Digite o codigo do item que quer editar: ");
+  scanf("%i", &i.cod);
+  getchar();
+
+  cache = fopen(".cache", "rb");
+  fseek(cache, 0, SEEK_END);
+  int len = ftell(cache);
+  int atual_cod = i.cod;
+  int real_cod = i.cod*sizeof(Item);
+  if (real_cod >= len) {
+    puts(" Item não existe");
+    getchar();
+    return '0';
+  }
+
+  fseek(cache, real_cod, SEEK_SET);
+  fread(&i, 1, sizeof (Item), cache);
+  i.cod = atual_cod;
+  fclose(cache);
+
+  puts(" O item escolhido foi: ");
+  printf(" %i - %s, %i items\n", i.cod, i.nome, i.qtd);
+  if (strlen((char *)i.desc) >= 1)
+    printf("  > %s\n", i.desc);
+
+  printf(
+      " Deseja editar qual dado?\n"
+      " 1 - Nome\n"
+      " 2 - Quantidade\n"
+      " 3 - Descrição\n"
+      "\n:"
+      );
+  switch (getchar()) {
+    case '1':
+      getchar();
+      printf(" Digite o nome do item: ");
+      scanf("%14[0-9a-zA-Z ]", i.nome);
+      while (getchar());
+      break;
+    case '2':
+      getchar();
+      printf(" Digite a quantidade de itens: ");
+      scanf("%i", &i.qtd);
+      getchar();
+      break;
+
+    case '3':
+      getchar();
+      printf(" Digite a descrição do item: ");
+      scanf("%29[0-9a-zA-Z ]", i.desc);
+      while (getchar());
+      break;
+  }
+
+  puts(" O item escolhido ficará assim: ");
+  printf(" %i - %s, %i items\n", i.cod, i.nome, i.qtd);
+  if (strlen((char *)i.desc) >= 1)
+    printf("  > %s\n", i.desc);
+
+  printf(" Deseja salvar os dados? [S/n] ");
+  if (getchar() != 'n') {
+    // Abre arquivo e pega o tamanho final
+    cache = fopen(".cache", "rb");
+    fseek(cache, 0, SEEK_END);
+    int cache_size = ftell(cache);
+
+    // Carrega arquivo em um buffer temporario
+    Item cache_content[cache_size / sizeof (Item) + 1];
+    memset(cache_content, 0, cache_size);
+    fread(cache_content, 1, cache_size, cache);
+    fclose(cache);
+
+    // Modifica item escolhido e salva
+    cache = fopen(".cache", "wb");
+    memcpy(&cache_content[i.cod], &i, sizeof (Item));
+    fwrite(cache_content, 1, cache_size, cache);
+    fclose(cache);
+
+    cache = fopen(".cache", "rb");
+    fclose(cache);
+
+    puts(" Salvo com sucesso!");
+  }
+
+  getchar();
+  return '0';
+}
+
+char excluir(void) {
+  Item i;
+  memset(&i, 0, sizeof (Item));
+
+  fflush(stdout);
+  fflush(stdin);
+  printf(" Digite o codigo do item que quer editar: ");
+  scanf("%i", &i.cod);
+  getchar();
+
+  cache = fopen(".cache", "rb");
+  fseek(cache, 0, SEEK_END);
+  int len = ftell(cache);
+  int atual_cod = i.cod;
+  int real_cod = i.cod*sizeof(Item);
+  if (real_cod >= len) {
+    puts(" Item não existe");
+    getchar();
+    return '0';
+  }
+
+  fseek(cache, real_cod, SEEK_SET);
+  fread(&i, 1, sizeof (Item), cache);
+  i.cod = atual_cod;
+  fclose(cache);
+
+  puts(" O item escolhido foi: ");
+  printf(" %i - %s, %i items\n", i.cod, i.nome, i.qtd);
+  if (strlen((char *)i.desc) >= 1)
+    printf("  > %s\n", i.desc);
+
+  printf(" Deseja mesmo apagar o item? [S/n] ");
+  if (getchar() != 'n') {
+    // Abre arquivo e pega o tamanho final
+    cache = fopen(".cache", "rb");
+    fseek(cache, 0, SEEK_END);
+    int cache_size = ftell(cache);
+    fseek(cache, 0, SEEK_SET);
+
+    FILE *tmp = fopen(".cache.tmp", "wb");
+    while (ftell(cache) < cache_size - 1) {
+      // Carrega item do cache em variavel
+      Item item_content;
+      memset(&item_content, 0, sizeof (Item));
+      fread(&item_content, 1, sizeof (Item), cache);
+
+      // Modifica item escolhido e salva items não excluidos
+      // no arquivo temporario
+      if (item_content.cod != atual_cod) {
+        fwrite(&item_content, 1, sizeof (Item), tmp);
+      }
+    }
+
+    fclose(tmp);
+    fclose(cache);
+
+    // Abre arquivo e pega o tamanho final
+    tmp = fopen(".cache", "rb");
+    fseek(tmp, 0, SEEK_END);
+    int tmp_size = ftell(tmp);
+    fseek(cache, 0, SEEK_SET);
+
+    cache = fopen(".cache", "wb");
+    while (ftell(tmp) < tmp_size) {
+      // Carrega item do arquivo temporario em variavel
+      Item item_content;
+      memset(&item_content, 0, sizeof (Item));
+      fread(&item_content, 1, sizeof (Item), tmp);
+
+      // Movendo do arquivo temporario para o cache
+      if (item_content.cod != atual_cod) {
+        fwrite(&item_content, 1, sizeof (Item), cache);
+      }
+    }
+    fclose(cache);
+
+    puts(" Salvo com sucesso!");
+    getchar();
+  }
   return '0';
 }

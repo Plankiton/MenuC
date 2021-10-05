@@ -1,14 +1,13 @@
 #include <stdio.h>
 #include "almoxerifado.h"
 
-char cmd = '0', last;
-char (*action)(char);
+char cmd = '0';
+char (*action)(void);
 int main(int argc, char *argv[])
 {
   action = &menu;
   while (cmd != 'q') {
-    last = cmd;
-    cmd = action(last);
+    cmd = action();
     switch (cmd) {
       case '0':
         action = &menu;
@@ -18,6 +17,12 @@ int main(int argc, char *argv[])
         break;
       case '2':
         action = &ver;
+        break;
+      case '3':
+        action = &editar;
+        break;
+      case '4':
+        action = &excluir;
         break;
     }
   }
