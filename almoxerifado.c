@@ -3,7 +3,13 @@
 #include <string.h>
 #include "almoxerifado.h"
 
+const char default_file [] = ".session";
+char file[50];
 FILE * cache;
+
+void setup() {
+  memcpy(file, default_file, sizeof(default_file));
+}
 
 char menu(void) {
   system("clear");
@@ -32,7 +38,7 @@ typedef struct {
 } Item;
 
 char cadastro(void) {
-  cache = fopen(".cache", "ab");
+  cache = fopen(file, "ab");
 
   Item i;
   memset(&i, 0, sizeof (Item));
@@ -83,7 +89,7 @@ char ver(void) {
   scanf("%i", &i.cod);
   getchar();
 
-  cache = fopen(".cache", "rb");
+  cache = fopen(file, "rb");
   fseek(cache, 0, SEEK_END);
   int len = ftell(cache);
   int atual_cod = i.cod;
@@ -118,7 +124,7 @@ char editar(void) {
   scanf("%i", &i.cod);
   getchar();
 
-  cache = fopen(".cache", "rb");
+  cache = fopen(file, "rb");
   fseek(cache, 0, SEEK_END);
   int len = ftell(cache);
   int atual_cod = i.cod;
@@ -176,7 +182,7 @@ char editar(void) {
   printf(" Deseja salvar os dados? [S/n] ");
   if (getchar() != 'n') {
     // Abre arquivo e pega o tamanho final
-    cache = fopen(".cache", "rb");
+    cache = fopen(file, "rb");
     fseek(cache, 0, SEEK_END);
     int cache_size = ftell(cache);
 
@@ -187,12 +193,12 @@ char editar(void) {
     fclose(cache);
 
     // Modifica item escolhido e salva
-    cache = fopen(".cache", "wb");
+    cache = fopen(file, "wb");
     memcpy(&cache_content[i.cod], &i, sizeof (Item));
     fwrite(cache_content, 1, cache_size, cache);
     fclose(cache);
 
-    cache = fopen(".cache", "rb");
+    cache = fopen(file, "rb");
     fclose(cache);
 
     puts(" Salvo com sucesso!");
@@ -212,7 +218,7 @@ char excluir(void) {
   scanf("%i", &i.cod);
   getchar();
 
-  cache = fopen(".cache", "rb");
+  cache = fopen(file, "rb");
   fseek(cache, 0, SEEK_END);
   int len = ftell(cache);
   int atual_cod = i.cod;
@@ -236,12 +242,12 @@ char excluir(void) {
   printf(" Deseja mesmo apagar o item? [S/n] ");
   if (getchar() != 'n') {
     // Abre arquivo e pega o tamanho final
-    cache = fopen(".cache", "rb");
+    cache = fopen(file, "rb");
     fseek(cache, 0, SEEK_END);
     int cache_size = ftell(cache);
     fseek(cache, 0, SEEK_SET);
 
-    FILE *tmp = fopen(".cache.tmp", "wb");
+    FILE *tmp = fopen(TMP_FILE, "wb");
     while (ftell(cache) < cache_size - 1) {
       // Carrega item do cache em variavel
       Item item_content;
@@ -259,27 +265,102 @@ char excluir(void) {
     fclose(cache);
 
     // Abre arquivo e pega o tamanho final
-    tmp = fopen(".cache", "rb");
+    tmp = fopen(TMP_FILE, "rb");
     fseek(tmp, 0, SEEK_END);
     int tmp_size = ftell(tmp);
-    fseek(cache, 0, SEEK_SET);
+    fseek(tmp, 0, SEEK_SET);
 
-    cache = fopen(".cache", "wb");
+    int counter = 0;
+    cache = fopen(file, "wb");
+    fseek(cache, 0, SEEK_SET);
     while (ftell(tmp) < tmp_size) {
       // Carrega item do arquivo temporario em variavel
       Item item_content;
       memset(&item_content, 0, sizeof (Item));
       fread(&item_content, 1, sizeof (Item), tmp);
+      item_content.cod = counter++;
 
       // Movendo do arquivo temporario para o cache
-      if (item_content.cod != atual_cod) {
-        fwrite(&item_content, 1, sizeof (Item), cache);
-      }
+      fwrite(&item_content, 1, sizeof (Item), cache);
     }
+    fclose(cache);
+    fclose(tmp);
+
+    cache = fopen(file, "rb");
     fclose(cache);
 
     puts(" Salvo com sucesso!");
     getchar();
   }
+  return '0';
+}
+
+char listar(void) {
+  Item i;
+
+  // Abre arquivo e pega o tamanho final
+  cache = fopen(file, "rb");
+  fseek(cache, 0, SEEK_END);
+  int cache_size = ftell(cache);
+  fseek(cache, 0, SEEK_SET);
+  int counter = 0;
+  while (ftell(cache) < cache_size - 1) {
+    memset(&i, 0, sizeof (Item));
+    fread(&i, 1, sizeof (Item), cache);
+    i.cod = counter++;
+
+    // Exibindo item
+    printf(" %i - %s, %i items\n", i.cod, i.nome, i.qtd);
+    if (strlen((char *)i.desc) >= 1)
+      printf("  > %s\n", i.desc);
+    puts("");
+  }
+  fclose(cache);
+  getchar();
+  getchar();
+  return '0';
+}
+
+char open(void) {
+  getchar();
+  printf(" Digite o nome do arquivo: ");
+  scanf("%14[0-9a-zA-Z ]", (char *)file);
+  getchar();
+
+  printf(
+      " Deseja fazer o que?\n"
+      " 1 - Salvar (vai sobrescrever se o arquivo existir)\n"
+      " 2 - Abrir\n"
+      "\n:"
+      );
+  switch (getchar()) {
+    case '1':
+      FILE * tmp = fopen(default_file, "rb");
+      fseek(tmp, 0, SEEK_END);
+      int tmp_size = ftell(tmp);
+      fseek(tmp, 0, SEEK_SET);
+
+      cache = fopen(file, "wb");
+      fseek(cache, 0, SEEK_SET);
+      while (ftell(tmp) < tmp_size) {
+        // Carrega item do arquivo temporario em variavel
+        Item item_content;
+        memset(&item_content, 0, sizeof (Item));
+        fread(&item_content, 1, sizeof (Item), tmp);
+
+        // Movendo do arquivo temporario para o cache
+        fwrite(&item_content, 1, sizeof (Item), cache);
+      }
+      fclose(cache);
+      fclose(tmp);
+
+      cache = fopen(file, "rb");
+      fclose(cache);
+
+      puts(" Salvo com sucesso!");
+      getchar();
+      break;
+  }
+
   return '0';
 }

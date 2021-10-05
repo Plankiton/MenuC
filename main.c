@@ -5,6 +5,7 @@ char cmd = '0';
 char (*action)(void);
 int main(int argc, char *argv[])
 {
+  setup();
   action = &menu;
   while (cmd != 'q') {
     cmd = action();
@@ -23,6 +24,12 @@ int main(int argc, char *argv[])
         break;
       case '4':
         action = &excluir;
+        break;
+      case '5':
+        action = &listar;
+        break;
+      case '6':
+        action = &listar;
         break;
     }
   }
