@@ -1,0 +1,2 @@
+language = "c"
+run = "gcc *.c -o e && ./e"

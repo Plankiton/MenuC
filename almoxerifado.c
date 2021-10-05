@@ -182,30 +182,59 @@ char editar(void) {
 
   printf(" Deseja salvar os dados? [S/n] ");
   if (getchar() != 'n') {
-    // Abre arquivo e pega o tamanho final
+       // Abre arquivo e pega o tamanho final
     cache = fopen(file, "rb");
     fseek(cache, 0, SEEK_END);
     int cache_size = ftell(cache);
+    fseek(cache, 0, SEEK_SET);
 
-    // Carrega arquivo em um buffer temporario
-    Item cache_content[cache_size / sizeof (Item) + 1];
-    memset(cache_content, 0, cache_size);
-    fread(cache_content, 1, cache_size, cache);
+    FILE *tmp = fopen(TMP_FILE, "wb");
+    while (ftell(cache) < cache_size) {
+      // Carrega item do cache em variavel
+      Item item_content;
+      memset(&item_content, 0, sizeof (Item));
+      fread(&item_content, 1, sizeof (Item), cache);
+
+      // Modifica item escolhido
+      // no arquivo temporario
+      if (item_content.cod == curr_cod) {
+        memcpy(&item_content, &i, sizeof (Item));
+      }
+      fwrite(&item_content, 1, sizeof (Item), tmp);
+    }
+
+    fclose(tmp);
     fclose(cache);
 
-    // Modifica item escolhido e salva
+    // Abre arquivo e pega o tamanho final
+    tmp = fopen(TMP_FILE, "rb");
+    fseek(tmp, 0, SEEK_END);
+    int tmp_size = ftell(tmp);
+    fseek(tmp, 0, SEEK_SET);
+
+    int counter = 0;
     cache = fopen(file, "wb");
-    memcpy(&cache_content[i.cod], &i, sizeof (Item));
-    fwrite(cache_content, 1, cache_size, cache);
+    fseek(cache, 0, SEEK_SET);
+    while (ftell(tmp) < tmp_size) {
+      // Carrega item do arquivo temporario em variavel
+      Item item_content;
+      memset(&item_content, 0, sizeof (Item));
+      fread(&item_content, 1, sizeof (Item), tmp);
+      item_content.cod = counter++;
+
+      // Movendo do arquivo temporario para o cache
+      fwrite(&item_content, 1, sizeof (Item), cache);
+    }
     fclose(cache);
+    fclose(tmp);
 
     cache = fopen(file, "rb");
     fclose(cache);
 
     puts(" Salvo com sucesso!");
+    getchar();
   }
 
-  getchar();
   return '0';
 }
 
@@ -290,7 +319,7 @@ char excluir(void) {
     cache = fopen(file, "rb");
     fclose(cache);
 
-    puts(" Salvo com sucesso!");
+    puts(" Apagado com sucesso!");
     getchar();
   }
   return '0';
