@@ -321,10 +321,10 @@ char listar(void) {
   return '0';
 }
 
-char open(void) {
+char abrir(void) {
   getchar();
   printf(" Digite o nome do arquivo: ");
-  scanf("%14[0-9a-zA-Z ]", (char *)file);
+  scanf("%14[0-9a-zA-Z\\.\\_ ]", (char *)file);
   getchar();
 
   printf(
@@ -333,8 +333,8 @@ char open(void) {
       " 2 - Abrir\n"
       "\n:"
       );
-  switch (getchar()) {
-    case '1':
+
+  if (getchar() == '1') {
       FILE * tmp = fopen(default_file, "rb");
       fseek(tmp, 0, SEEK_END);
       int tmp_size = ftell(tmp);
@@ -357,9 +357,17 @@ char open(void) {
       cache = fopen(file, "rb");
       fclose(cache);
 
-      puts(" Salvo com sucesso!");
+      puts(" Salvo e carregado com sucesso!");
       getchar();
-      break;
+      getchar();
+  } else {
+      cache = fopen(file, "rb");
+      if (!cache)
+        cache = fopen(file, "wb");
+      fclose(cache);
+
+      puts(" Arquivo carregado com sucesso!");
+      getchar();
   }
 
   return '0';

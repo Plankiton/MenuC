@@ -6,6 +6,6 @@ char ver(void);
 char editar(void);
 char excluir(void);
 char listar(void);
-char open(void);
+char abrir(void);
 
 void setup();
