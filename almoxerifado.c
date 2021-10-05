@@ -14,6 +14,7 @@ void setup() {
 char menu(void) {
   system("clear");
   printf(
+      " Almoxerifado\n"
       "---------------------------------\n"
       " 1 - Cadastrar item\n"
       " 2 - Visualizar item\n"
@@ -92,7 +93,7 @@ char ver(void) {
   cache = fopen(file, "rb");
   fseek(cache, 0, SEEK_END);
   int len = ftell(cache);
-  int atual_cod = i.cod;
+  int curr_cod = i.cod;
   int real_cod = i.cod*sizeof(Item);
   if (real_cod >= len) {
     puts(" Item não existe");
@@ -102,7 +103,7 @@ char ver(void) {
 
   fseek(cache, real_cod, SEEK_SET);
   fread(&i, 1, sizeof (Item), cache);
-  i.cod = atual_cod;
+  i.cod = curr_cod;
   fclose(cache);
 
   puts(" O item escolhido foi: ");
@@ -127,7 +128,7 @@ char editar(void) {
   cache = fopen(file, "rb");
   fseek(cache, 0, SEEK_END);
   int len = ftell(cache);
-  int atual_cod = i.cod;
+  int curr_cod = i.cod;
   int real_cod = i.cod*sizeof(Item);
   if (real_cod >= len) {
     puts(" Item não existe");
@@ -137,7 +138,7 @@ char editar(void) {
 
   fseek(cache, real_cod, SEEK_SET);
   fread(&i, 1, sizeof (Item), cache);
-  i.cod = atual_cod;
+  i.cod = curr_cod;
   fclose(cache);
 
   puts(" O item escolhido foi: ");
@@ -157,7 +158,7 @@ char editar(void) {
       getchar();
       printf(" Digite o nome do item: ");
       scanf("%14[0-9a-zA-Z ]", i.nome);
-      while (getchar());
+      getchar();
       break;
     case '2':
       getchar();
@@ -170,7 +171,7 @@ char editar(void) {
       getchar();
       printf(" Digite a descrição do item: ");
       scanf("%29[0-9a-zA-Z ]", i.desc);
-      while (getchar());
+      getchar();
       break;
   }
 
@@ -221,7 +222,7 @@ char excluir(void) {
   cache = fopen(file, "rb");
   fseek(cache, 0, SEEK_END);
   int len = ftell(cache);
-  int atual_cod = i.cod;
+  int curr_cod = i.cod;
   int real_cod = i.cod*sizeof(Item);
   if (real_cod >= len) {
     puts(" Item não existe");
@@ -231,7 +232,7 @@ char excluir(void) {
 
   fseek(cache, real_cod, SEEK_SET);
   fread(&i, 1, sizeof (Item), cache);
-  i.cod = atual_cod;
+  i.cod = curr_cod;
   fclose(cache);
 
   puts(" O item escolhido foi: ");
@@ -256,7 +257,7 @@ char excluir(void) {
 
       // Modifica item escolhido e salva items não excluidos
       // no arquivo temporario
-      if (item_content.cod != atual_cod) {
+      if (item_content.cod != curr_cod) {
         fwrite(&item_content, 1, sizeof (Item), tmp);
       }
     }
@@ -300,6 +301,13 @@ char listar(void) {
 
   // Abre arquivo e pega o tamanho final
   cache = fopen(file, "rb");
+  if (!cache) {
+    puts(" Você ainda não registrou nada!");
+    getchar();
+    getchar();
+    return '0';
+  }
+
   fseek(cache, 0, SEEK_END);
   int cache_size = ftell(cache);
   fseek(cache, 0, SEEK_SET);
@@ -315,6 +323,14 @@ char listar(void) {
       printf("  > %s\n", i.desc);
     puts("");
   }
+
+  if (counter == 0) {
+    puts(" Você ainda não registrou nada!");
+    getchar();
+    getchar();
+    return '0';
+  }
+
   fclose(cache);
   getchar();
   getchar();
